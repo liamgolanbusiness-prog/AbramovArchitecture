@@ -11,31 +11,57 @@
 
   // ---------- Nav: scroll state + mobile toggle ----------
   const nav = document.querySelector('.nav');
-  const toggle = nav.querySelector('.nav__toggle');
-  const menu = nav.querySelector('.nav__menu');
+  const toggle = nav && nav.querySelector('.nav__toggle');
+  const menu = nav && nav.querySelector('.nav__menu');
+  const progress = document.querySelector('.scroll-progress');
+
+  const closeMenu = () => {
+    if (!nav) return;
+    nav.classList.remove('is-open');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  };
+  const openMenu = () => {
+    if (!nav) return;
+    nav.classList.add('is-open');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  };
 
   const onScroll = () => {
-    nav.classList.toggle('is-scrolled', window.scrollY > 24);
-    // progress bar
-    const h = document.documentElement.scrollHeight - window.innerHeight;
-    const p = Math.max(0, Math.min(1, window.scrollY / Math.max(1, h)));
-    document.querySelector('.scroll-progress').style.width = (p * 100).toFixed(2) + '%';
+    if (nav) nav.classList.toggle('is-scrolled', window.scrollY > 24);
+    if (progress) {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const p = Math.max(0, Math.min(1, window.scrollY / Math.max(1, h)));
+      progress.style.width = (p * 100).toFixed(2) + '%';
+    }
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  toggle.addEventListener('click', () => {
-    const isOpen = nav.classList.toggle('is-open');
-    toggle.setAttribute('aria-expanded', String(isOpen));
-    document.body.style.overflow = isOpen ? 'hidden' : '';
+  if (toggle) {
+    toggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (nav.classList.contains('is-open')) closeMenu();
+      else openMenu();
+    });
+  }
+  // close on link tap
+  if (menu) {
+    menu.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (link && nav.classList.contains('is-open')) closeMenu();
+    });
+  }
+  // close on escape, close on resize to desktop
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && nav && nav.classList.contains('is-open')) closeMenu();
   });
-  // close menu when a link is tapped (mobile)
-  menu.addEventListener('click', (e) => {
-    if (e.target.closest('a') && nav.classList.contains('is-open')) {
-      nav.classList.remove('is-open');
-      toggle.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
-    }
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 880 && nav && nav.classList.contains('is-open')) closeMenu();
   });
 
   // ---------- Parallax on hero blueprint ----------
